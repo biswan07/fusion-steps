@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, limit } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { Video, DanceStyle } from '../types'
 
 function toVideo(id: string, data: any): Video {
   return { id, ...data, uploadedAt: data.uploadedAt?.toDate() || new Date() }
+}
+
+function sortByUploadDesc(videos: Video[]) {
+  return videos.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime())
 }
 
 export function useVideos(style?: DanceStyle, maxResults = 50) {
@@ -13,12 +17,16 @@ export function useVideos(style?: DanceStyle, maxResults = 50) {
 
   useEffect(() => {
     if (!db) return
+    // Use simple query without orderBy to avoid composite index requirement
     const constraints = style
-      ? [where('style', '==', style), orderBy('uploadedAt', 'desc'), limit(maxResults)]
-      : [orderBy('uploadedAt', 'desc'), limit(maxResults)]
+      ? [where('style', '==', style), limit(maxResults)]
+      : [limit(maxResults)]
     const q = query(collection(db, 'videos'), ...constraints)
     const unsubscribe = onSnapshot(q, (snap) => {
-      setVideos(snap.docs.map((d) => toVideo(d.id, d.data())))
+      setVideos(sortByUploadDesc(snap.docs.map((d) => toVideo(d.id, d.data()))))
+      setLoading(false)
+    }, (err) => {
+      console.error('useVideos error:', err)
       setLoading(false)
     })
     return unsubscribe
@@ -37,16 +45,18 @@ export function useBatchVideos(batchIds: string[], style?: DanceStyle) {
       setLoading(false)
       return
     }
-    const constraints = [
+    const q = query(
+      collection(db, 'videos'),
       where('batchIds', 'array-contains-any', batchIds.slice(0, 10)),
-      orderBy('uploadedAt', 'desc'),
-      limit(50),
-    ]
-    const q = query(collection(db, 'videos'), ...constraints)
+      limit(50)
+    )
     const unsubscribe = onSnapshot(q, (snap) => {
       let vids = snap.docs.map((d) => toVideo(d.id, d.data()))
       if (style) vids = vids.filter((v) => v.style === style)
-      setVideos(vids)
+      setVideos(sortByUploadDesc(vids))
+      setLoading(false)
+    }, (err) => {
+      console.error('useBatchVideos error:', err)
       setLoading(false)
     })
     return unsubscribe

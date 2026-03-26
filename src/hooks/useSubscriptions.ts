@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore'
+import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { Subscription } from '../types'
 
@@ -12,17 +12,24 @@ export function useActiveSubscription(studentId: string | undefined) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!db || !studentId) return
+    if (!db || !studentId) {
+      setSubscription(null)
+      setLoading(false)
+      return
+    }
     const q = query(
       collection(db, 'subscriptions'),
       where('studentId', '==', studentId),
-      where('isActive', '==', true),
-      orderBy('assignedAt', 'asc')
+      where('isActive', '==', true)
     )
     const unsubscribe = onSnapshot(q, (snap) => {
       // FIFO: oldest active subscription first
       const subs = snap.docs.map((d) => toSub(d.id, d.data()))
+      subs.sort((a, b) => a.assignedAt.getTime() - b.assignedAt.getTime())
       setSubscription(subs[0] || null)
+      setLoading(false)
+    }, (err) => {
+      console.error('useActiveSubscription error:', err)
       setLoading(false)
     })
     return unsubscribe
@@ -37,9 +44,14 @@ export function useStudentSubscriptions(studentId: string | undefined) {
 
   useEffect(() => {
     if (!db || !studentId) return
-    const q = query(collection(db, 'subscriptions'), where('studentId', '==', studentId), orderBy('assignedAt', 'desc'))
+    const q = query(collection(db, 'subscriptions'), where('studentId', '==', studentId))
     const unsubscribe = onSnapshot(q, (snap) => {
-      setSubscriptions(snap.docs.map((d) => toSub(d.id, d.data())))
+      const subs = snap.docs.map((d) => toSub(d.id, d.data()))
+      subs.sort((a, b) => b.assignedAt.getTime() - a.assignedAt.getTime())
+      setSubscriptions(subs)
+      setLoading(false)
+    }, (err) => {
+      console.error('useStudentSubscriptions error:', err)
       setLoading(false)
     })
     return unsubscribe
@@ -61,6 +73,9 @@ export function useLowBalanceStudents() {
     )
     const unsubscribe = onSnapshot(q, (snap) => {
       setSubscriptions(snap.docs.map((d) => toSub(d.id, d.data())))
+      setLoading(false)
+    }, (err) => {
+      console.error('useLowBalanceStudents error:', err)
       setLoading(false)
     })
     return unsubscribe

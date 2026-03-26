@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, onSnapshot, doc, orderBy } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, doc } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { AppUser } from '../types'
 
@@ -13,9 +13,14 @@ export function useStudents() {
 
   useEffect(() => {
     if (!db) return
-    const q = query(collection(db, 'users'), where('role', '==', 'student'), orderBy('name'))
+    const q = query(collection(db, 'users'), where('role', '==', 'student'))
     const unsubscribe = onSnapshot(q, (snap) => {
-      setStudents(snap.docs.map((d) => toUser(d.id, d.data())))
+      const users = snap.docs.map((d) => toUser(d.id, d.data()))
+      users.sort((a, b) => a.name.localeCompare(b.name))
+      setStudents(users)
+      setLoading(false)
+    }, (err) => {
+      console.error('useStudents error:', err)
       setLoading(false)
     })
     return unsubscribe

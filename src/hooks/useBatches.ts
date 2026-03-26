@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, onSnapshot, doc, getDoc, orderBy } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { Batch } from '../types'
 
 function toBatch(id: string, data: any): Batch {
   return { id, ...data, createdAt: data.createdAt?.toDate() || new Date() }
+}
+
+const dayOrder: Record<string, number> = {
+  Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6, Sunday: 7,
 }
 
 export function useBatches(activeOnly = true) {
@@ -13,12 +17,15 @@ export function useBatches(activeOnly = true) {
 
   useEffect(() => {
     if (!db) return
-    const constraints = activeOnly
-      ? [where('isActive', '==', true), orderBy('dayOfWeek')]
-      : [orderBy('dayOfWeek')]
+    const constraints = activeOnly ? [where('isActive', '==', true)] : []
     const q = query(collection(db, 'batches'), ...constraints)
     const unsubscribe = onSnapshot(q, (snap) => {
-      setBatches(snap.docs.map((d) => toBatch(d.id, d.data())))
+      const items = snap.docs.map((d) => toBatch(d.id, d.data()))
+      items.sort((a, b) => (dayOrder[a.dayOfWeek] || 8) - (dayOrder[b.dayOfWeek] || 8))
+      setBatches(items)
+      setLoading(false)
+    }, (err) => {
+      console.error('useBatches error:', err)
       setLoading(false)
     })
     return unsubscribe
@@ -35,6 +42,9 @@ export function useBatch(batchId: string | undefined) {
     if (!db || !batchId) return
     getDoc(doc(db, 'batches', batchId)).then((snap) => {
       setBatch(snap.exists() ? toBatch(snap.id, snap.data()) : null)
+      setLoading(false)
+    }).catch((err) => {
+      console.error('useBatch error:', err)
       setLoading(false)
     })
   }, [batchId])
@@ -55,6 +65,9 @@ export function useStudentBatches(batchIds: string[]) {
     const q = query(collection(db, 'batches'), where('__name__', 'in', batchIds))
     const unsubscribe = onSnapshot(q, (snap) => {
       setBatches(snap.docs.map((d) => toBatch(d.id, d.data())))
+      setLoading(false)
+    }, (err) => {
+      console.error('useStudentBatches error:', err)
       setLoading(false)
     })
     return unsubscribe
