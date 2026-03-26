@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isTeacher() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isTeacher() || isOwner(userId);
+      allow write: if isTeacher();
+      allow update: if isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken']);
+    }
+
+    match /batches/{batchId} {
+      allow read: if isTeacher() ||
+        (request.auth != null && resource.data.studentIds.hasAny([request.auth.uid]));
+      allow write: if isTeacher();
+    }
+
+    match /attendance/{attendanceId} {
+      allow read: if isTeacher() || (request.auth != null && resource.data.studentId == request.auth.uid);
+      allow create: if isTeacher();
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read: if isTeacher() || (request.auth != null && resource.data.studentId == request.auth.uid);
+      allow write: if isTeacher();
+    }
+
+    match /videos/{videoId} {
+      allow read: if isTeacher() ||
+        (request.auth != null &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.batchIds.hasAny(resource.data.batchIds));
+      allow write: if isTeacher();
+    }
+  }
+}

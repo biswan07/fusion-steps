@@ -1,0 +1,41 @@
+.superpowers/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite
+*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Firebase functions
+functions/lib/
+functions/node_modules/
+.env
+.playwright-mcp/
+dist/
+.claude/
+.superpowers/
