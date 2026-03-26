@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { getFirestore, enableIndexedDbPersistence, doc, updateDoc } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, doc, updateDoc } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 import { getMessaging, isSupported, getToken } from 'firebase/messaging'
 
@@ -18,15 +18,8 @@ export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseCon
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null
 
 export const auth = app ? getAuth(app) : null
-export const db = app ? getFirestore(app) : null
+export const db = app ? initializeFirestore(app, { localCache: persistentLocalCache({}) }) : null
 export const storage = app ? getStorage(app) : null
-
-// Enable offline persistence for Firestore
-if (db) {
-  enableIndexedDbPersistence(db).catch((err) => {
-    console.warn('Firestore persistence failed:', err.code)
-  })
-}
 
 // Messaging (conditional — not supported in all browsers)
 export const getMessagingInstance = async () => {

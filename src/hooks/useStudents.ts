@@ -42,6 +42,9 @@ export function useStudent(studentId: string | undefined) {
     const unsubscribe = onSnapshot(doc(db, 'users', studentId), (snap) => {
       setStudent(snap.exists() ? toUser(snap.id, snap.data()) : null)
       setLoading(false)
+    }, (err) => {
+      console.error('useStudent error:', err)
+      setLoading(false)
     })
     return unsubscribe
   }, [studentId])
@@ -63,6 +66,9 @@ export function useBatchStudents(studentIds: string[]) {
     const q = query(collection(db, 'users'), where('__name__', 'in', studentIds.slice(0, 30)))
     const unsubscribe = onSnapshot(q, (snap) => {
       setStudents(snap.docs.map((d) => toUser(d.id, d.data())))
+      setLoading(false)
+    }, (err) => {
+      console.error('useBatchStudents error:', err)
       setLoading(false)
     })
     return unsubscribe

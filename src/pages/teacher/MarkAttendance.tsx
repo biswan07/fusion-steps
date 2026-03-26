@@ -44,11 +44,11 @@ export function MarkAttendance() {
     setShowConfirm(false)
 
     try {
-      // Fix S10: duplicate prevention — check if attendance already exists for this batch today
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
-      const todayEnd = new Date()
-      todayEnd.setHours(23, 59, 59, 999)
+      // Fix S10 + Bug4: duplicate prevention using AEST timezone
+      const { getAESTDate } = await import('../../utils/dates')
+      const aestNow = getAESTDate(new Date())
+      const todayStart = new Date(aestNow.getFullYear(), aestNow.getMonth(), aestNow.getDate(), 0, 0, 0, 0)
+      const todayEnd = new Date(aestNow.getFullYear(), aestNow.getMonth(), aestNow.getDate(), 23, 59, 59, 999)
 
       const existingQuery = query(
         collection(db, 'attendance'),
@@ -80,30 +80,8 @@ export function MarkAttendance() {
           createdAt: serverTimestamp(),
         })
 
-        // Fix D1: decrement classesRemaining on the student's active subscription
-        if (status === 'present') {
-          const subsQuery = query(
-            collection(db, 'subscriptions'),
-            where('studentId', '==', student.id),
-            where('isActive', '==', true)
-          )
-          const subsSnap = await getDocs(subsQuery)
-          if (!subsSnap.empty) {
-            // FIFO: oldest active subscription first
-            const sorted = subsSnap.docs.sort((a, b) => {
-              const aTime = a.data().assignedAt?.toDate()?.getTime() || 0
-              const bTime = b.data().assignedAt?.toDate()?.getTime() || 0
-              return aTime - bTime
-            })
-            const activeSub = sorted[0]
-            const remaining = activeSub.data().classesRemaining - 1
-            if (remaining <= 0) {
-              batchWrite.update(activeSub.ref, { classesRemaining: remaining, isActive: false })
-            } else {
-              batchWrite.update(activeSub.ref, { classesRemaining: remaining })
-            }
-          }
-        }
+        // Subscription deduction is handled by the onAttendanceCreated Cloud Function
+        // to avoid double-decrement and ensure server-side enforcement
       }
 
       await batchWrite.commit()

@@ -25,19 +25,27 @@ export function StudentProfile() {
 
   async function addToBatch(batchId: string) {
     if (!db || !studentId) return
-    const batch = writeBatch(db)
-    batch.update(doc(db, 'users', studentId), { batchIds: arrayUnion(batchId) })
-    batch.update(doc(db, 'batches', batchId), { studentIds: arrayUnion(studentId) })
-    await batch.commit()
-    setAddingBatch(false)
+    try {
+      const batch = writeBatch(db)
+      batch.update(doc(db, 'users', studentId), { batchIds: arrayUnion(batchId) })
+      batch.update(doc(db, 'batches', batchId), { studentIds: arrayUnion(studentId) })
+      await batch.commit()
+      setAddingBatch(false)
+    } catch (err) {
+      console.error('addToBatch error:', err)
+    }
   }
 
   async function removeFromBatch(batchId: string) {
     if (!db || !studentId) return
-    const batch = writeBatch(db)
-    batch.update(doc(db, 'users', studentId), { batchIds: arrayRemove(batchId) })
-    batch.update(doc(db, 'batches', batchId), { studentIds: arrayRemove(studentId) })
-    await batch.commit()
+    try {
+      const batch = writeBatch(db)
+      batch.update(doc(db, 'users', studentId), { batchIds: arrayRemove(batchId) })
+      batch.update(doc(db, 'batches', batchId), { studentIds: arrayRemove(studentId) })
+      await batch.commit()
+    } catch (err) {
+      console.error('removeFromBatch error:', err)
+    }
   }
 
   return (

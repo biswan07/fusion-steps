@@ -42,6 +42,7 @@ function CreateBatchForm({ onCreated }: { onCreated: () => void }) {
   const [style, setStyle] = useState<DanceStyle>('Bollywood')
   const [level, setLevel] = useState<BatchLevel>('Beginner')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -49,12 +50,18 @@ function CreateBatchForm({ onCreated }: { onCreated: () => void }) {
     e.preventDefault()
     if (!db) return
     setSaving(true)
-    await addDoc(collection(db, 'batches'), {
-      name, dayOfWeek, time, style, level,
-      studentIds: [], isActive: true, createdAt: serverTimestamp(),
-    })
-    setSaving(false)
-    onCreated()
+    setError('')
+    try {
+      await addDoc(collection(db, 'batches'), {
+        name, dayOfWeek, time, style, level,
+        studentIds: [], isActive: true, createdAt: serverTimestamp(),
+      })
+      onCreated()
+    } catch (err: any) {
+      setError(err.message || 'Failed to create batch')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -83,6 +90,7 @@ function CreateBatchForm({ onCreated }: { onCreated: () => void }) {
           <option value="Advanced" className="bg-[#1A1A2E]">Advanced</option>
         </select>
       </div>
+      {error && <p className="text-[#E91E8C] text-xs">{error}</p>}
       <button type="submit" disabled={saving}
         className="w-full bg-[#00BCD4] text-white font-medium rounded-lg py-2 text-sm disabled:opacity-50">
         {saving ? 'Creating...' : 'Create Batch'}

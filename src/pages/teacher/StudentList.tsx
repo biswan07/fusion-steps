@@ -90,7 +90,7 @@ function AddStudentForm({ onCreated }: { onCreated: () => void }) {
       {error && <p className="text-[#E91E8C] text-xs">{error}</p>}
       <button type="submit" disabled={saving}
         className="w-full bg-[#00BCD4] text-white font-medium rounded-lg py-2 text-sm disabled:opacity-50">
-        {saving ? 'Creating...' : 'Create & Send Invite'}
+        {saving ? 'Creating...' : 'Create Student'}
       </button>
     </form>
   )
