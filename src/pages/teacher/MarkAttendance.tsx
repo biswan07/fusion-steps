@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore'
+import {
+  collection,
+  writeBatch,
+  doc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useBatch } from '../../hooks/useBatches'
@@ -16,6 +24,8 @@ export function MarkAttendance() {
   const { students } = useBatchStudents(batch?.studentIds || [])
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent'>>({})
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   if (loading) return <div className="text-white/30 text-sm">Loading...</div>
   if (!batch) return <div className="text-white/30 text-sm">Batch not found</div>
@@ -30,28 +40,80 @@ export function MarkAttendance() {
   async function handleSubmit() {
     if (!db || !user || !batch) return
     setSubmitting(true)
+    setError(null)
+    setShowConfirm(false)
 
-    const batch_write = writeBatch(db)
-    const now = new Date()
+    try {
+      // Fix S10: duplicate prevention — check if attendance already exists for this batch today
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+      const todayEnd = new Date()
+      todayEnd.setHours(23, 59, 59, 999)
 
-    for (const student of students) {
-      const status = attendance[student.id] || 'absent'
-      const ref = doc(collection(db, 'attendance'))
-      batch_write.set(ref, {
-        batchId: batch.id,
-        studentId: student.id,
-        studentName: student.name,
-        batchName: batch.name,
-        date: now,
-        status,
-        markedBy: user.uid,
-        createdAt: serverTimestamp(),
-      })
+      const existingQuery = query(
+        collection(db, 'attendance'),
+        where('batchId', '==', batch.id),
+        where('date', '>=', todayStart),
+        where('date', '<=', todayEnd)
+      )
+      const existingSnap = await getDocs(existingQuery)
+      if (!existingSnap.empty) {
+        setError('Attendance has already been submitted for this batch today.')
+        setSubmitting(false)
+        return
+      }
+
+      const batchWrite = writeBatch(db)
+      const now = new Date()
+
+      for (const student of students) {
+        const status = attendance[student.id] || 'absent'
+        const ref = doc(collection(db, 'attendance'))
+        batchWrite.set(ref, {
+          batchId: batch.id,
+          studentId: student.id,
+          studentName: student.name,
+          batchName: batch.name,
+          date: now,
+          status,
+          markedBy: user.uid,
+          createdAt: serverTimestamp(),
+        })
+
+        // Fix D1: decrement classesRemaining on the student's active subscription
+        if (status === 'present') {
+          const subsQuery = query(
+            collection(db, 'subscriptions'),
+            where('studentId', '==', student.id),
+            where('isActive', '==', true)
+          )
+          const subsSnap = await getDocs(subsQuery)
+          if (!subsSnap.empty) {
+            // FIFO: oldest active subscription first
+            const sorted = subsSnap.docs.sort((a, b) => {
+              const aTime = a.data().assignedAt?.toDate()?.getTime() || 0
+              const bTime = b.data().assignedAt?.toDate()?.getTime() || 0
+              return aTime - bTime
+            })
+            const activeSub = sorted[0]
+            const remaining = activeSub.data().classesRemaining - 1
+            if (remaining <= 0) {
+              batchWrite.update(activeSub.ref, { classesRemaining: remaining, isActive: false })
+            } else {
+              batchWrite.update(activeSub.ref, { classesRemaining: remaining })
+            }
+          }
+        }
+      }
+
+      await batchWrite.commit()
+      navigate(`/teacher/batches/${batch.id}`)
+    } catch (err) {
+      console.error('Attendance submit error:', err)
+      setError('Failed to submit attendance. Please try again.')
+    } finally {
+      setSubmitting(false)
     }
-
-    await batch_write.commit()
-    setSubmitting(false)
-    navigate(`/teacher/batches/${batch.id}`)
   }
 
   const markedCount = Object.values(attendance).filter((s) => s === 'present').length
@@ -75,10 +137,48 @@ export function MarkAttendance() {
         ))}
       </div>
 
-      <button onClick={handleSubmit} disabled={submitting}
-        className="w-full bg-[#FF6F00] text-white font-semibold rounded-xl py-3 disabled:opacity-50">
+      {error && (
+        <div className="rounded-xl bg-red-500/15 border border-red-500/30 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+
+      <button
+        onClick={() => setShowConfirm(true)}
+        disabled={submitting}
+        className="w-full bg-[#FF6F00] text-white font-semibold rounded-xl py-3 disabled:opacity-50"
+      >
         {submitting ? 'Submitting...' : 'Submit Attendance'}
       </button>
+
+      {/* Fix D8: confirmation dialog */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 pb-8">
+          <div className="w-full max-w-sm rounded-2xl bg-[#1A1A2E] border border-white/10 p-6 space-y-4">
+            <h3 className="text-base font-semibold">Confirm Attendance</h3>
+            <p className="text-sm text-white/60">
+              {markedCount} student{markedCount !== 1 ? 's' : ''} marked present for{' '}
+              <span className="text-white/80 font-medium">{batch.name}</span>. This will deduct
+              one class from each present student's subscription.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 rounded-xl border border-white/20 py-2.5 text-sm font-medium text-white/70"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="flex-1 rounded-xl bg-[#FF6F00] py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {submitting ? 'Submitting...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

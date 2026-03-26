@@ -34,7 +34,11 @@ export function useStudent(studentId: string | undefined) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!db || !studentId) return
+    if (!db || !studentId) {
+      setStudent(null)
+      setLoading(false)
+      return
+    }
     const unsubscribe = onSnapshot(doc(db, 'users', studentId), (snap) => {
       setStudent(snap.exists() ? toUser(snap.id, snap.data()) : null)
       setLoading(false)

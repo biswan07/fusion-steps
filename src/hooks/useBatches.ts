@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, doc } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { Batch } from '../types'
 
@@ -39,14 +39,19 @@ export function useBatch(batchId: string | undefined) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!db || !batchId) return
-    getDoc(doc(db, 'batches', batchId)).then((snap) => {
+    if (!db || !batchId) {
+      setBatch(null)
+      setLoading(false)
+      return
+    }
+    const unsubscribe = onSnapshot(doc(db, 'batches', batchId), (snap) => {
       setBatch(snap.exists() ? toBatch(snap.id, snap.data()) : null)
       setLoading(false)
-    }).catch((err) => {
+    }, (err) => {
       console.error('useBatch error:', err)
       setLoading(false)
     })
+    return unsubscribe
   }, [batchId])
 
   return { batch, loading }

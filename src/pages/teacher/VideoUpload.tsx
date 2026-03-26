@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db, storage } from '../../firebase'
 import { useAuth } from '../../hooks/useAuth'
@@ -52,7 +52,8 @@ export function VideoUpload() {
     setError('')
 
     try {
-      const storageRef = ref(storage, `videos/${Date.now()}-${file.name}`)
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      const storageRef = ref(storage, `videos/${Date.now()}-${safeName}`)
       const task = uploadBytesResumable(storageRef, file)
 
       await new Promise<void>((resolve, reject) => {
@@ -65,16 +66,22 @@ export function VideoUpload() {
 
       const storageUrl = await getDownloadURL(storageRef)
 
-      await addDoc(collection(db, 'videos'), {
-        title, description, style,
-        batchIds: selectedBatches,
-        storageUrl,
-        thumbnailUrl: '',
-        uploadedBy: user.uid,
-        uploadedAt: serverTimestamp(),
-      })
-
-      navigate('/teacher/videos')
+      try {
+        await addDoc(collection(db, 'videos'), {
+          title, description, style,
+          batchIds: selectedBatches,
+          storageUrl,
+          thumbnailUrl: '',
+          uploadedBy: user.uid,
+          uploadedAt: serverTimestamp(),
+        })
+        navigate('/teacher/videos')
+      } catch (err: any) {
+        // Clean up orphaned storage file
+        try { await deleteObject(storageRef) } catch {}
+        setError(err.message || 'Failed to save video details — upload rolled back')
+        setUploading(false)
+      }
     } catch (err: any) {
       setError(err.message || 'Upload failed — try again')
       setUploading(false)

@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import {
+  collection,
+  writeBatch,
+  doc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useAuth } from '../../hooks/useAuth'
 import { useStudent } from '../../hooks/useStudents'
@@ -19,6 +27,7 @@ export function AssignSubscription() {
   const { student, loading } = useStudent(studentId)
   const [selected, setSelected] = useState<PackSize | null>(null)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   if (loading) return <div className="text-white/30 text-sm">Loading...</div>
   if (!student) return <div className="text-white/30 text-sm">Student not found</div>
@@ -26,17 +35,42 @@ export function AssignSubscription() {
   async function handleAssign() {
     if (!db || !user || !selected || !studentId) return
     setSaving(true)
-    await addDoc(collection(db, 'subscriptions'), {
-      studentId,
-      studentName: student!.name,
-      packSize: selected,
-      classesRemaining: selected,
-      assignedBy: user.uid,
-      assignedAt: serverTimestamp(),
-      isActive: true,
-    })
-    setSaving(false)
-    navigate(`/teacher/students/${studentId}`)
+    setError(null)
+
+    try {
+      // Fix D3: deactivate any existing active subscriptions before creating new one
+      const existingQuery = query(
+        collection(db, 'subscriptions'),
+        where('studentId', '==', studentId),
+        where('isActive', '==', true)
+      )
+      const existingSnap = await getDocs(existingQuery)
+
+      const batchWrite = writeBatch(db)
+
+      existingSnap.docs.forEach((existingDoc) => {
+        batchWrite.update(existingDoc.ref, { isActive: false })
+      })
+
+      const newSubRef = doc(collection(db, 'subscriptions'))
+      batchWrite.set(newSubRef, {
+        studentId,
+        studentName: student!.name,
+        packSize: selected,
+        classesRemaining: selected,
+        assignedBy: user.uid,
+        assignedAt: serverTimestamp(),
+        isActive: true,
+      })
+
+      await batchWrite.commit()
+      navigate(`/teacher/students/${studentId}`)
+    } catch (err) {
+      console.error('AssignSubscription error:', err)
+      setError('Failed to assign pack. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -59,6 +93,12 @@ export function AssignSubscription() {
           </button>
         ))}
       </div>
+
+      {error && (
+        <div className="rounded-xl bg-red-500/15 border border-red-500/30 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
 
       <button onClick={handleAssign} disabled={!selected || saving}
         className="w-full bg-[#FF6F00] text-white font-semibold rounded-xl py-3 disabled:opacity-50">

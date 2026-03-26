@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { collection, query, where, onSnapshot, limit } from 'firebase/firestore'
+import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase'
 import type { AttendanceRecord } from '../types'
 
@@ -17,7 +17,7 @@ export function useBatchAttendance(batchId: string | undefined) {
 
   useEffect(() => {
     if (!db || !batchId) return
-    const q = query(collection(db, 'attendance'), where('batchId', '==', batchId), limit(100))
+    const q = query(collection(db, 'attendance'), where('batchId', '==', batchId))
     const unsubscribe = onSnapshot(q, (snap) => {
       setRecords(sortByDateDesc(snap.docs.map((d) => toRecord(d.id, d.data()))))
       setLoading(false)
@@ -37,7 +37,7 @@ export function useStudentAttendance(studentId: string | undefined) {
 
   useEffect(() => {
     if (!db || !studentId) return
-    const q = query(collection(db, 'attendance'), where('studentId', '==', studentId), limit(50))
+    const q = query(collection(db, 'attendance'), where('studentId', '==', studentId))
     const unsubscribe = onSnapshot(q, (snap) => {
       setRecords(sortByDateDesc(snap.docs.map((d) => toRecord(d.id, d.data()))))
       setLoading(false)

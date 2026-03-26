@@ -13,8 +13,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isTeacher() || isOwner(userId);
-      allow write: if isTeacher();
-      allow update: if isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken']);
+      allow create: if isTeacher();
+      allow update: if isTeacher() ||
+        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['fcmToken']));
     }
 
     match /batches/{batchId} {
@@ -25,12 +26,12 @@ service cloud.firestore {
 
     match /attendance/{attendanceId} {
       allow read: if isTeacher() || (request.auth != null && resource.data.studentId == request.auth.uid);
-      allow create: if isTeacher();
+      allow create, update: if isTeacher();
     }
 
     match /subscriptions/{subscriptionId} {
       allow read: if isTeacher() || (request.auth != null && resource.data.studentId == request.auth.uid);
-      allow write: if isTeacher();
+      allow create, update: if isTeacher();
     }
 
     match /videos/{videoId} {

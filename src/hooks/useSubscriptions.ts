@@ -43,7 +43,11 @@ export function useStudentSubscriptions(studentId: string | undefined) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!db || !studentId) return
+    if (!db || !studentId) {
+      setSubscriptions([])
+      setLoading(false)
+      return
+    }
     const q = query(collection(db, 'subscriptions'), where('studentId', '==', studentId))
     const unsubscribe = onSnapshot(q, (snap) => {
       const subs = snap.docs.map((d) => toSub(d.id, d.data()))

@@ -14,7 +14,7 @@ export function StudentProfile() {
   const { student, loading } = useStudent(studentId)
   const { subscriptions } = useStudentSubscriptions(studentId)
   const { records } = useStudentAttendance(studentId)
-  const { batches: allBatches } = useBatches()
+  const { batches: allBatches } = useBatches(false)
   const [addingBatch, setAddingBatch] = useState(false)
 
   if (loading) return <div className="text-white/30 text-sm">Loading...</div>
@@ -86,7 +86,7 @@ export function StudentProfile() {
       </section>
 
       <section>
-        <div className="text-xs uppercase tracking-wider text-[#00BCD4] mb-3">Batches ({student.batchIds.length})</div>
+        <div className="text-xs uppercase tracking-wider text-[#00BCD4] mb-3">Batches ({allBatches.filter((b) => student.batchIds.includes(b.id)).length})</div>
         <div className="space-y-2">
           {allBatches.filter((b) => student.batchIds.includes(b.id)).map((b) => (
             <div key={b.id} className="bg-white/5 rounded-lg p-3 flex justify-between items-center">
