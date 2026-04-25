@@ -3,6 +3,8 @@
 PWA for Fusion Steps Dance Academy (Sriparna Dutta, Sydney). Two roles: teacher and student.
 Built on Firebase. Mobile-first, offline-tolerant.
 
+**Backlog & triage:** [GitHub Project #7](https://github.com/users/biswan07/projects/7/views/1) (`biswan07/fusion-steps`). All field feedback from Sriparna is filed here as exhaustive issues before any code is written. Status field: Backlog → Ready → In progress → In review → Done.
+
 ## Commands
 
 ```bash
