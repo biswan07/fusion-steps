@@ -66,7 +66,8 @@ Security in `firestore.rules`: teachers full access, students read only their ow
 
 ## Gotchas
 
-- **Subscription deduction is server-only.** `onAttendanceCreated` decrements FIFO (oldest active first) and flips `isActive=false` at zero. Never decrement client-side or you'll double-deduct.
+- **Subscription deduction is server-only.** `onAttendanceCreated` decrements FIFO (oldest active first) and flips `isActive=false` at zero. Never decrement client-side or you'll double-deduct. All post-create mutations to `classesRemaining` / `packSize` / `editHistory` go through the `editSubscription` callable; `firestore.rules` blocks client updates to those fields.
+- **`isBackdated` suppresses FCM.** Attendance docs written with `isBackdated: true` (backdate-by-date flow) still go through `onAttendanceCreated` for FIFO decrement, but **must not** trigger any FCM (no low-balance alert, no attendance receipt). The trigger reads the flag and short-circuits before either `messaging.send` call, and appends a `backdate-dates` entry to the target subscription's `editHistory`. Any future attendance-side notification path must check this flag.
 - **Attendance dedupe** uses AEST day bounds (`MarkAttendance.tsx`), not UTC. UTC bounds would let a teacher submit twice across midnight UTC.
 - **Phone login → synthetic email.** Phone-only accounts use `phone_<digits>@fusionsteps.app`. `LoginPage.tsx` and `StudentList.tsx` (`AddStudentForm`) both translate. Don't break this without updating both.
 - **Firestore query caps:** `in` ≤ 30 items (`useBatchStudents`), `array-contains-any` ≤ 10 (`useBatchVideos`). Both are worked around with `.slice()` — be aware when adding new queries.
