@@ -83,6 +83,18 @@ export function installAdminMock(opts: {
 
   vi.doMock('firebase-admin', () => adminMock)
 
+  // Modular admin/firestore subpath imports used by editSubscription / onAttendanceCreated.
+  vi.doMock('firebase-admin/firestore', () => ({
+    getFirestore: () => opts.firestoreImpl(),
+    FieldValue: {
+      serverTimestamp: () => 'SERVER_TS',
+      arrayUnion: (...x: unknown[]) => ({ __arrayUnion: x }),
+    },
+    Timestamp: {
+      now: () => ({ __timestamp: 'NOW' }),
+    },
+  }))
+
   return {
     firestore: adminMock.firestore,
     messagingSend,

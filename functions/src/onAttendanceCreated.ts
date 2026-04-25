@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore'
 
 // Backdated attendance (`isBackdated: true`) feeds the FIFO decrement but MUST
 // NOT trigger FCM — the teacher is recording past classes, not notifying the
@@ -13,7 +14,7 @@ export const onAttendanceCreated = functions.firestore
     if (data.status !== 'present') return
 
     const isBackdated = data.isBackdated === true
-    const db = admin.firestore()
+    const db = getFirestore()
 
     // FIFO: oldest active subscription first
     const subsSnap = await db.collection('subscriptions')
@@ -36,10 +37,10 @@ export const onAttendanceCreated = functions.firestore
       if (newRemaining <= 0) updates.isActive = false
 
       if (isBackdated) {
-        updates.editHistory = admin.firestore.FieldValue.arrayUnion({
+        updates.editHistory = FieldValue.arrayUnion({
           action: 'backdate-dates',
           editedBy: data.markedBy,
-          editedAt: admin.firestore.Timestamp.now(),
+          editedAt: Timestamp.now(),
           oldValue: { packSize, classesRemaining: oldRemaining },
           newValue: { packSize, classesRemaining: newRemaining },
           dates: [data.date],

@@ -93,8 +93,18 @@ export function StudentProfile() {
     }
   }
 
+  const editedAtMillis = (v: unknown): number => {
+    if (v instanceof Date) return v.getTime()
+    if (v && typeof v === 'object' && 'toDate' in v && typeof (v as { toDate: () => Date }).toDate === 'function') {
+      return (v as { toDate: () => Date }).toDate().getTime()
+    }
+    if (v && typeof v === 'object' && 'seconds' in v) {
+      return (v as { seconds: number }).seconds * 1000
+    }
+    return 0
+  }
   const sortedHistory = (activeSub?.editHistory ?? []).slice().sort(
-    (a, b) => new Date(b.editedAt).getTime() - new Date(a.editedAt).getTime()
+    (a, b) => editedAtMillis(b.editedAt) - editedAtMillis(a.editedAt)
   )
 
   return (

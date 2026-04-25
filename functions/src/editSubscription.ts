@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions'
-import * as admin from 'firebase-admin'
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore'
 
 type PackSize = 1 | 5 | 10 | 20
 const VALID_PACK_SIZES: PackSize[] = [1, 5, 10, 20]
@@ -15,7 +15,7 @@ export const editSubscription = functions.https.onCall(
       throw new functions.https.HttpsError('unauthenticated', 'Must be logged in')
     }
     const callerUid = context.auth.uid
-    const callerDoc = await admin.firestore().doc(`users/${callerUid}`).get()
+    const callerDoc = await getFirestore().doc(`users/${callerUid}`).get()
     if (callerDoc.data()?.role !== 'teacher') {
       throw new functions.https.HttpsError('permission-denied', 'Only teachers can edit subscriptions')
     }
@@ -24,7 +24,7 @@ export const editSubscription = functions.https.onCall(
       throw new functions.https.HttpsError('invalid-argument', 'subscriptionId required')
     }
 
-    const db = admin.firestore()
+    const db = getFirestore()
     const subRef = db.doc(`subscriptions/${data.subscriptionId}`)
 
     return db.runTransaction(async (txn) => {
@@ -59,10 +59,10 @@ export const editSubscription = functions.https.onCall(
           packSize: data.newPackSize,
           classesRemaining: data.newClassesRemaining,
           isActive: data.newClassesRemaining > 0,
-          editHistory: admin.firestore.FieldValue.arrayUnion({
+          editHistory: FieldValue.arrayUnion({
             action: 'resize',
             editedBy: callerUid,
-            editedAt: admin.firestore.Timestamp.now(),
+            editedAt: Timestamp.now(),
             oldValue: { packSize: sub.packSize, classesRemaining: sub.classesRemaining },
             newValue: { packSize: data.newPackSize, classesRemaining: data.newClassesRemaining },
           }),
@@ -92,10 +92,10 @@ export const editSubscription = functions.https.onCall(
         txn.update(subRef, {
           classesRemaining: newRemaining,
           isActive: newRemaining > 0,
-          editHistory: admin.firestore.FieldValue.arrayUnion({
+          editHistory: FieldValue.arrayUnion({
             action: 'backdate-count',
             editedBy: callerUid,
-            editedAt: admin.firestore.Timestamp.now(),
+            editedAt: Timestamp.now(),
             oldValue: { packSize: sub.packSize, classesRemaining: sub.classesRemaining },
             newValue: { packSize: sub.packSize, classesRemaining: newRemaining },
           }),
