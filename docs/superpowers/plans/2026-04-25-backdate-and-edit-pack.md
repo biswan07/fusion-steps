@@ -2848,3 +2848,27 @@ Refs: #2"
 - No placeholders. Every code block contains the actual code an engineer types in.
 - Type consistency: `EditEntry`, `PackSize`, `SubscriptionEditAction` defined once in T3 and reused identically in T4, T6, T7, T9.
 - One known limitation: backdate-on-existing-pack via the `backdate-dates` flow writes attendance docs directly from the client (consistent with `MarkAttendance.tsx`) and relies on the trigger to append `editHistory`. If multiple backdated dates are submitted, each fires a separate trigger run — `arrayUnion` keeps the audit honest with one entry per date.
+
+---
+
+## Completion notes (2026-04-25)
+
+Shipped via PR #3, squash-merged to `main` as `a9814a9`. GitHub issue #2 closed; Project #7 status moved to **Done**.
+
+**Two extra tasks added during execution that weren't in the original plan:**
+
+- **T11 — Playwright E2E suite** (committed as part of the same PR). Boots `firebase emulators:exec --only auth,firestore,functions,storage` against `--project demo-fusion-steps` plus a vite dev server with `VITE_USE_EMULATOR=1`, seeds deterministic teacher/student/batch via `firebase-admin`, then drives Chromium through the 5 user stories. Requires `firebase-tools` CLI and `openjdk@21` (Java 21+ is mandatory in current `firebase-tools`).
+- **T12 — Two latent bugs surfaced by E2E and fixed in the same PR:**
+  1. `admin.firestore.FieldValue.arrayUnion(...)` was `undefined` under the firebase-functions emulator runtime in `firebase-admin@12`. Switched both `editSubscription.ts` and `onAttendanceCreated.ts` to modular `import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore'`. The unit tests had passed because the mock provided the static members.
+  2. `StudentProfile`'s history sort and `formatEditEntry` used `new Date(timestamp)` which returns NaN for Firestore `Timestamp` objects — broke reverse-chronological order. Both now coerce `Timestamp` / `Date` / `{ seconds }` shapes before reading millis.
+
+**Other deltas vs. plan:**
+
+- Firestore emulator port moved 8080 → 8088 in `firebase.json` to dodge a local port collision with another dev server. `src/firebase.ts` and `e2e/*` updated to match.
+- `src/firebase.ts` pins `projectId` to `demo-fusion-steps` when `VITE_USE_EMULATOR=1`. Without this, the emulator's single-project mode rejects reads from the real prod project ID and silently returns empty collections.
+
+**Final test counts on the merged commit:**
+
+- 19 Cloud Functions unit tests (`vitest` + `firebase-admin` mocks)
+- 39 PWA unit/integration tests (`vitest` + Testing Library)
+- 7 Playwright E2E tests in real Chromium against the full emulator stack
