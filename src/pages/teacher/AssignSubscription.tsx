@@ -20,6 +20,13 @@ const packs: { size: PackSize; label: string }[] = [
   { size: 20, label: '20 Classes' },
 ]
 
+function getFee(packSize: PackSize, category: string | undefined): string {
+  if (!category) return ''
+  if (packSize === 10) return category === 'Women' ? '$200' : '$150'
+  const perClass = category === 'Women' ? 23 : 18
+  return `$${perClass * packSize}`
+}
+
 export function AssignSubscription() {
   const { studentId } = useParams()
   const navigate = useNavigate()
@@ -88,8 +95,15 @@ export function AssignSubscription() {
                 ? 'bg-[#00BCD4]/20 border-2 border-[#00BCD4]'
                 : 'bg-white/5 border-2 border-transparent'
             }`}>
-            <div className="text-lg font-semibold">{pack.label}</div>
-            <div className="text-xs text-white/40 mt-1">{pack.size}-class pass</div>
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-lg font-semibold">{pack.label}</div>
+                <div className="text-xs text-white/40 mt-1">{pack.size}-class pass</div>
+              </div>
+              {student?.studentCategory && (
+                <div className="text-sm font-semibold text-[#00BCD4]">{getFee(pack.size, student.studentCategory)}</div>
+              )}
+            </div>
           </button>
         ))}
       </div>

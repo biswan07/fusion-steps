@@ -12,7 +12,7 @@ export function AttendanceHistory() {
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Attendance History</h2>
       {records.length === 0 ? (
-        <p className="text-white/30 text-sm">No attendance records yet</p>
+        <p className="text-white/30 text-sm">No attendance records yet. Your teacher will mark attendance during class.</p>
       ) : (
         <div className="space-y-2">
           {records.map((r) => (

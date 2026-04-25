@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useBatches } from '../../hooks/useBatches'
 import { BatchCard } from '../../components/BatchCard'
@@ -26,9 +26,23 @@ export function BatchList() {
 
       <div className="space-y-2">
         {batches.map((batch) => (
-          <Link key={batch.id} to={`/teacher/batches/${batch.id}`}>
-            <BatchCard batch={batch} />
-          </Link>
+          <div key={batch.id} className="relative">
+            <Link to={`/teacher/batches/${batch.id}`}>
+              <BatchCard batch={batch} />
+            </Link>
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (window.confirm(`Delete "${batch.name}"? This cannot be undone.`)) {
+                  deleteDoc(doc(db!, 'batches', batch.id))
+                }
+              }}
+              className="absolute top-3 right-3 text-white/30 hover:text-[#E91E8C] text-xs"
+            >
+              ✕
+            </button>
+          </div>
         ))}
       </div>
     </div>

@@ -43,6 +43,14 @@ export function StudentProfilePage() {
         )}
       </section>
 
+      {student?.parentName && (
+        <div className="bg-white/5 rounded-xl p-4 space-y-1">
+          <div className="text-xs uppercase tracking-wider text-[#7B2D8B] mb-2">Parent/Guardian</div>
+          <div className="text-sm">{student.parentName}</div>
+          <div className="text-xs text-white/40">{student.parentPhone}</div>
+        </div>
+      )}
+
       <section>
         <div className="text-xs uppercase tracking-wider text-[#00BCD4] mb-3">My Batches</div>
         <div className="space-y-2">

@@ -13,9 +13,17 @@ interface Props {
 }
 
 export function VideoCard({ video, onPlay }: Props) {
+  function handleClick() {
+    if (video.storageUrl.includes('firebasestorage.googleapis.com')) {
+      onPlay?.(video)
+    } else {
+      window.open(video.storageUrl, '_blank', 'noopener')
+    }
+  }
+
   return (
     <div className="bg-white/5 rounded-xl p-3 flex gap-3 items-center cursor-pointer active:bg-white/10"
-      onClick={() => onPlay?.(video)}>
+      onClick={handleClick}>
       <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7B2D8B] to-[#E91E8C] flex items-center justify-center text-xl flex-shrink-0">
         ▶
       </div>

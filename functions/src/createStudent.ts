@@ -16,12 +16,23 @@ export const createStudent = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('permission-denied', 'Only teachers can create students')
   }
 
-  const { name: rawName, email: rawEmail, phone: rawPhone } = data as { name: string; email: string; phone?: string }
+  const {
+    name: rawName, email: rawEmail, phone: rawPhone,
+    studentCategory, enrollmentType,
+    parentName: rawParentName, parentPhone: rawParentPhone,
+  } = data as {
+    name: string; email: string; phone?: string
+    studentCategory: 'Children' | 'Teen' | 'Women'
+    enrollmentType: 'Term' | 'Casual'
+    parentName?: string; parentPhone?: string
+  }
 
   // Trim whitespace before validation
   const name = rawName?.trim()
   const email = rawEmail?.trim()
   const phone = rawPhone?.trim()
+  const parentName = rawParentName?.trim() || ''
+  const parentPhone = rawParentPhone?.trim() || ''
 
   if (!name || !email) {
     throw new functions.https.HttpsError('invalid-argument', 'Name and email are required')
@@ -38,6 +49,18 @@ export const createStudent = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('invalid-argument', `Phone must be ${MAX_PHONE_LENGTH} characters or fewer`)
   }
 
+  const validCategories = ['Children', 'Teen', 'Women']
+  if (!studentCategory || !validCategories.includes(studentCategory)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Valid student category is required')
+  }
+  const validEnrollments = ['Term', 'Casual']
+  if (!enrollmentType || !validEnrollments.includes(enrollmentType)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Valid enrollment type is required')
+  }
+  if ((studentCategory === 'Children' || studentCategory === 'Teen') && !parentName) {
+    throw new functions.https.HttpsError('invalid-argument', 'Parent/Guardian name is required for minors')
+  }
+
   const userRecord = await admin.auth().createUser({
     email,
     displayName: name,
@@ -49,6 +72,10 @@ export const createStudent = functions.https.onCall(async (data, context) => {
     phone: phone || '',
     role: 'student',
     batchIds: [],
+    studentCategory,
+    enrollmentType,
+    parentName,
+    parentPhone,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     createdBy: context.auth.uid,
   })

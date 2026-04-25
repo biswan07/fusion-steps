@@ -21,7 +21,7 @@ service cloud.firestore {
     match /batches/{batchId} {
       allow read: if isTeacher() ||
         (request.auth != null && resource.data.studentIds.hasAny([request.auth.uid]));
-      allow write: if isTeacher();
+      allow create, update, delete: if isTeacher();
     }
 
     match /attendance/{attendanceId} {

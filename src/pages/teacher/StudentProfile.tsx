@@ -6,6 +6,7 @@ import { useStudentSubscriptions } from '../../hooks/useSubscriptions'
 import { useStudentAttendance } from '../../hooks/useAttendance'
 import { useBatches } from '../../hooks/useBatches'
 import { SubscriptionBadge } from '../../components/SubscriptionBadge'
+import { PunchCard } from '../../components/PunchCard'
 import { formatDateDDMMYYYY } from '../../utils/dates'
 import { useState } from 'react'
 
@@ -54,6 +55,16 @@ export function StudentProfile() {
         <h2 className="text-lg font-semibold">{student.name}</h2>
         <div className="text-sm text-white/50">{student.email}</div>
         {student.phone && <div className="text-sm text-white/50">{student.phone}</div>}
+        {student.studentCategory && (
+          <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-[#7B2D8B]/20 text-[#7B2D8B]">
+            {student.studentCategory}
+          </span>
+        )}
+        {student.parentName && (
+          <div className="text-xs text-white/40 mt-1">
+            Guardian: {student.parentName} · {student.parentPhone}
+          </div>
+        )}
       </div>
 
       <div className="flex gap-3">
@@ -81,12 +92,15 @@ export function StudentProfile() {
       <section>
         <div className="text-xs uppercase tracking-wider text-[#00BCD4] mb-3">Subscription</div>
         {activeSub ? (
-          <div className="bg-white/5 rounded-xl p-4 flex justify-between items-center">
-            <div>
-              <div className="text-sm">{activeSub.packSize}-class pack</div>
-              <div className="text-xs text-white/40 mt-0.5">Assigned {formatDateDDMMYYYY(activeSub.assignedAt)}</div>
+          <div className="bg-white/5 rounded-xl p-4 space-y-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-sm">{activeSub.packSize}-class pack</div>
+                <div className="text-xs text-white/40 mt-0.5">Assigned {formatDateDDMMYYYY(activeSub.assignedAt)}</div>
+              </div>
+              <SubscriptionBadge classesRemaining={activeSub.classesRemaining} />
             </div>
-            <SubscriptionBadge classesRemaining={activeSub.classesRemaining} />
+            <PunchCard packSize={activeSub.packSize} classesRemaining={activeSub.classesRemaining} />
           </div>
         ) : (
           <p className="text-white/30 text-sm">No active subscription</p>

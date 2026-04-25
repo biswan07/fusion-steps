@@ -34,8 +34,7 @@ Thumbs.db
 # Firebase functions
 functions/lib/
 functions/node_modules/
-.env
-.playwright-mcp/
-dist/
+
+# Local Claude Code state
 .claude/
-.superpowers/
+.playwright-mcp/

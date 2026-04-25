@@ -3,6 +3,7 @@ import { useStudent } from '../../hooks/useStudents'
 import { useActiveSubscription } from '../../hooks/useSubscriptions'
 import { useStudentBatches } from '../../hooks/useBatches'
 import { getGreeting, getAESTDate, getCurrentDayAEST } from '../../utils/dates'
+import { PunchCard } from '../../components/PunchCard'
 
 export function StudentHome() {
   const { user } = useAuth()
@@ -44,6 +45,15 @@ export function StudentHome() {
           <div className="text-xs text-[#E91E8C] mt-2">No active subscription</div>
         )}
       </div>
+
+      {subscription && (
+        <section>
+          <div className="text-xs uppercase tracking-wider text-[#00BCD4] mb-3">Class Pass</div>
+          <div className="bg-white/5 rounded-xl p-4">
+            <PunchCard packSize={subscription.packSize} classesRemaining={subscription.classesRemaining} />
+          </div>
+        </section>
+      )}
 
       {nextBatch && (
         <section>

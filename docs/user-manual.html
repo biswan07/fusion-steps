@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fusion Steps — User Manual</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #00BCD4;
+    --purple: #7B2D8B;
+    --orange: #FF6F00;
+    --pink: #E91E8C;
+    --dark: #1A1A2E;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; color: #333; line-height: 1.7; background: #fafafa; }
+  .cover { background: var(--dark); color: white; text-align: center; padding: 80px 20px; }
+  .cover img { width: 120px; height: 120px; border-radius: 50%; margin-bottom: 20px; }
+  .cover h1 { font-family: 'Dancing Script', cursive; font-size: 48px; color: var(--teal); }
+  .cover .subtitle { color: rgba(255,255,255,0.6); font-size: 14px; margin-top: 4px; }
+  .cover .manual-title { font-size: 28px; font-weight: 600; margin-top: 30px; }
+  .cover .version { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 10px; }
+  .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+  h2 { font-size: 28px; color: var(--dark); margin: 50px 0 20px; padding-bottom: 10px; border-bottom: 3px solid var(--teal); }
+  h3 { font-size: 20px; color: var(--purple); margin: 30px 0 12px; }
+  h4 { font-size: 16px; color: var(--orange); margin: 20px 0 8px; }
+  p { margin: 10px 0; }
+  .step { background: white; border-radius: 12px; padding: 20px; margin: 16px 0; border-left: 4px solid var(--teal); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .step-number { display: inline-block; background: var(--teal); color: white; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-size: 14px; font-weight: 600; margin-right: 10px; }
+  .step-title { font-weight: 600; font-size: 16px; }
+  .step p { color: #555; font-size: 14px; margin-top: 8px; }
+  .tip { background: #E8F5E9; border-radius: 10px; padding: 14px 18px; margin: 14px 0; font-size: 14px; }
+  .tip::before { content: "💡 Tip: "; font-weight: 600; }
+  .warning { background: #FFF3E0; border-radius: 10px; padding: 14px 18px; margin: 14px 0; font-size: 14px; }
+  .warning::before { content: "⚠️ Important: "; font-weight: 600; }
+  .icon-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }
+  .icon-card { background: white; border-radius: 10px; padding: 16px; text-align: center; flex: 1; min-width: 150px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .icon-card .emoji { font-size: 32px; margin-bottom: 6px; }
+  .icon-card .label { font-size: 13px; font-weight: 600; color: var(--dark); }
+  .icon-card .desc { font-size: 12px; color: #777; margin-top: 4px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge-green { background: rgba(76,175,80,0.15); color: #2E7D32; }
+  .badge-orange { background: rgba(255,111,0,0.15); color: #E65100; }
+  .badge-red { background: rgba(233,30,140,0.15); color: #C2185B; }
+  .screen-mock { background: var(--dark); color: white; border-radius: 16px; padding: 20px; margin: 20px 0; font-size: 13px; }
+  .screen-mock .header { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px; }
+  .screen-mock .header .logo { width: 32px; height: 32px; background: linear-gradient(135deg, var(--teal), var(--purple)); border-radius: 50%; }
+  .screen-mock .header .brand { font-family: 'Dancing Script'; color: var(--teal); font-size: 16px; }
+  .screen-mock .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); margin: 12px 0 8px; }
+  .screen-mock .card { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; margin: 6px 0; }
+  .screen-mock .nav { display: flex; justify-content: space-around; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; font-size: 11px; color: rgba(255,255,255,0.4); }
+  .screen-mock .nav .active { color: var(--teal); }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+  th { background: var(--dark); color: white; font-weight: 500; }
+  .toc { background: white; border-radius: 12px; padding: 24px; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .toc h3 { color: var(--dark); margin: 0 0 16px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 6px 0; }
+  .toc a { color: var(--teal); text-decoration: none; font-weight: 500; }
+  .toc a:hover { text-decoration: underline; }
+  .student-section { border-left: 4px solid var(--pink); }
+  @media print { .cover { page-break-after: always; } h2 { page-break-before: always; } }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <div style="font-size:64px;margin-bottom:10px;">🩰</div>
+  <h1>Fusion Steps</h1>
+  <div class="subtitle">by Sriparna Dutta</div>
+  <div class="manual-title">User Manual</div>
+  <div class="version">Version 1.0 — March 2026</div>
+  <div style="margin-top:40px;display:flex;justify-content:center;gap:24px;flex-wrap:wrap;">
+    <div style="text-align:center;"><div style="font-size:24px;">📋</div><div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">Manage Batches</div></div>
+    <div style="text-align:center;"><div style="font-size:24px;">👥</div><div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">Track Students</div></div>
+    <div style="text-align:center;"><div style="font-size:24px;">✅</div><div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">Mark Attendance</div></div>
+    <div style="text-align:center;"><div style="font-size:24px;">💳</div><div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">Manage Subscriptions</div></div>
+    <div style="text-align:center;"><div style="font-size:24px;">🎬</div><div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px;">Share Videos</div></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#dashboard">Your Dashboard</a></li>
+    <li><a href="#batches">Managing Batches</a></li>
+    <li><a href="#students">Managing Students</a></li>
+    <li><a href="#attendance">Marking Attendance</a></li>
+    <li><a href="#subscriptions">Subscriptions & Class Packs</a></li>
+    <li><a href="#videos">Video Library</a></li>
+    <li><a href="#student-guide">Student Guide (Share with Your Students)</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+  </ol>
+</div>
+
+<!-- 1. GETTING STARTED -->
+<h2 id="getting-started">1. Getting Started</h2>
+
+<h3>What is Fusion Steps?</h3>
+<p>Fusion Steps is your personal dance academy management app. It helps you manage your batches, track student attendance, handle class-pack subscriptions, and share dance videos — all from your phone or computer.</p>
+
+<h3>How to Access the App</h3>
+<div class="step">
+  <span class="step-number">1</span><span class="step-title">Open the App</span>
+  <p>Go to <strong><a href="https://fusion-steps.netlify.app">fusion-steps.netlify.app</a></strong> in any web browser (Chrome, Safari, etc.) on your phone or computer.</p>
+</div>
+<div class="step">
+  <span class="step-number">2</span><span class="step-title">Sign In</span>
+  <p>Enter your email address and password, then tap <strong>Sign In</strong>.</p>
+</div>
+<div class="step">
+  <span class="step-number">3</span><span class="step-title">Install on Your Phone (Optional)</span>
+  <p>For the best experience, add the app to your home screen:</p>
+  <p><strong>On Android:</strong> Tap the browser menu (three dots) → "Add to Home Screen"<br>
+  <strong>On iPhone:</strong> Tap the Share button → "Add to Home Screen"</p>
+  <p>This makes the app work like a native app — it opens full-screen without the browser bar!</p>
+</div>
+
+<div class="tip">Once installed on your home screen, the app loads instantly and works even with a slow connection (you can view your data offline).</div>
+
+<h3>Navigation</h3>
+<p>The app has four main tabs at the bottom of the screen:</p>
+
+<div class="icon-row">
+  <div class="icon-card"><div class="emoji">🏠</div><div class="label">Home</div><div class="desc">Today's batches, alerts, recent uploads</div></div>
+  <div class="icon-card"><div class="emoji">📋</div><div class="label">Batches</div><div class="desc">Create & manage dance batches</div></div>
+  <div class="icon-card"><div class="emoji">👥</div><div class="label">Students</div><div class="desc">Add students, view profiles</div></div>
+  <div class="icon-card"><div class="emoji">🎬</div><div class="label">Videos</div><div class="desc">Upload & manage class videos</div></div>
+</div>
+
+<!-- 2. DASHBOARD -->
+<h2 id="dashboard">2. Your Dashboard</h2>
+
+<p>The Home screen is your command centre. Here's what you'll see:</p>
+
+<div class="screen-mock">
+  <div class="header">
+    <div class="logo"></div>
+    <div><div class="brand">Fusion Steps</div><div style="font-size:9px;color:rgba(255,255,255,0.4);">by Sriparna Dutta</div></div>
+    <div style="margin-left:auto;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.1);text-align:center;line-height:28px;font-size:12px;">S</div>
+  </div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.4);">Good evening,</div>
+  <div style="font-size:20px;font-weight:600;">Sriparna Dutta</div>
+  <div class="section-label">Today's Batches</div>
+  <div class="card" style="border-left:3px solid var(--orange);">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-weight:500;">Wed Bollywood Beginners</div><div style="font-size:11px;color:rgba(255,255,255,0.4);">6:00 PM · 8 students</div></div>
+      <div style="background:var(--orange);padding:3px 10px;border-radius:20px;font-size:11px;">Mark</div>
+    </div>
+  </div>
+  <div class="section-label" style="color:var(--pink);">⚠ Low Balance Alerts</div>
+  <div class="card" style="background:rgba(233,30,140,0.1);">
+    <div style="display:flex;justify-content:space-between;"><span>Priya Sharma</span><span style="color:var(--pink);font-size:12px;">1 class left</span></div>
+  </div>
+  <div class="nav">
+    <div class="active">🏠 Home</div><div>📋 Batches</div><div>👥 Students</div><div>🎬 Videos</div>
+  </div>
+</div>
+
+<h3>What Each Section Shows</h3>
+<table>
+  <tr><th>Section</th><th>What It Shows</th></tr>
+  <tr><td><strong>Today's Batches</strong></td><td>Only the batches scheduled for today (based on the day of the week). Each has a quick <strong>Mark</strong> button to jump straight to attendance.</td></tr>
+  <tr><td><strong>Low Balance Alerts</strong></td><td>Students with 2 or fewer classes remaining on their pack. A reminder to follow up about renewals.</td></tr>
+  <tr><td><strong>Recent Uploads</strong></td><td>The last 3 videos you uploaded to the library.</td></tr>
+</table>
+
+<!-- 3. BATCHES -->
+<h2 id="batches">3. Managing Batches</h2>
+
+<p>Batches are your dance classes — like "Wednesday Bollywood Beginners" or "Saturday Fusion Advanced."</p>
+
+<h3>Creating a New Batch</h3>
+<div class="step">
+  <span class="step-number">1</span><span class="step-title">Go to the Batches tab</span>
+  <p>Tap <strong>📋 Batches</strong> in the bottom navigation.</p>
+</div>
+<div class="step">
+  <span class="step-number">2</span><span class="step-title">Tap "+ New Batch"</span>
+  <p>A form will appear at the top of the screen.</p>
+</div>
+<div class="step">
+  <span class="step-number">3</span><span class="step-title">Fill in the details</span>
+  <p>
+    <strong>Batch Name:</strong> e.g., "Wednesday Bollywood Beginners"<br>
+    <strong>Day of Week:</strong> Select the day this class runs<br>
+    <strong>Time:</strong> e.g., "6:00 PM"<br>
+    <strong>Style:</strong> Bollywood, Western, or Fusion<br>
+    <strong>Level:</strong> Beginner, Intermediate, or Advanced
+  </p>
+</div>
+<div class="step">
+  <span class="step-number">4</span><span class="step-title">Tap "Create Batch"</span>
+  <p>The batch appears in your list immediately. Batches are colour-coded by style:</p>
+  <p>
+    <span style="display:inline-block;width:12px;height:12px;background:var(--orange);border-radius:2px;"></span> <strong>Orange</strong> = Bollywood &nbsp;&nbsp;
+    <span style="display:inline-block;width:12px;height:12px;background:var(--teal);border-radius:2px;"></span> <strong>Teal</strong> = Western &nbsp;&nbsp;
+    <span style="display:inline-block;width:12px;height:12px;background:var(--purple);border-radius:2px;"></span> <strong>Purple</strong> = Fusion
+  </p>
+</div>
+
+<h3>Viewing a Batch</h3>
+<p>Tap any batch in the list to see its detail page. You'll see:</p>
+<ul>
+  <li>Batch name, day, time, style, and level</li>
+  <li><strong>Mark Attendance</strong> button</li>
+  <li>List of enrolled students (with their subscription balance)</li>
+  <li>Recent attendance records</li>
+</ul>
+
+<!-- 4. STUDENTS -->
+<h2 id="students">4. Managing Students</h2>
+
+<h3>Adding a New Student</h3>
+<div class="step">
+  <span class="step-number">1</span><span class="step-title">Go to the Students tab</span>
+  <p>Tap <strong>👥 Students</strong> in the bottom navigation.</p>
+</div>
+<div class="step">
+  <span class="step-number">2</span><span class="step-title">Tap "+ Add Student"</span>
+</div>
+<div class="step">
+  <span class="step-number">3</span><span class="step-title">Enter their details</span>
+  <p>
+    <strong>Full Name:</strong> Their display name<br>
+    <strong>Email:</strong> They'll use this to log in<br>
+    <strong>Phone:</strong> Optional
+  </p>
+</div>
+<div class="step">
+  <span class="step-number">4</span><span class="step-title">Tap "Create Student"</span>
+  <p>The student account is created. They will receive a password reset email to set up their login.</p>
+</div>
+
+<div class="warning">The student must check their email and click the password reset link to set their password before they can log in.</div>
+
+<h3>Adding a Student to a Batch</h3>
+<div class="step">
+  <span class="step-number">1</span><span class="step-title">Open the student's profile</span>
+  <p>Tap their name in the Students list.</p>
+</div>
+<div class="step">
+  <span class="step-number">2</span><span class="step-title">Tap "Add to Batch"</span>
+  <p>A list of available batches will appear.</p>
+</div>
+<div class="step">
+  <span class="step-number">3</span><span class="step-title">Select the batch</span>
+  <p>They're now enrolled! They'll appear in that batch's student list and can see videos assigned to that batch.</p>
+</div>
+
+<h3>Searching for a Student</h3>
+<p>Use the search bar at the top of the Students tab. Type any part of their name or email to filter the list instantly.</p>
+
+<!-- 5. ATTENDANCE -->
+<h2 id="attendance">5. Marking Attendance</h2>
+
+<p>This is something you'll do every class. Here's how:</p>
+
+<h3>Quick Method (From Dashboard)</h3>
+<div class="step">
+  <span class="step-number">1</span><span class="step-title">Tap "Mark" on today's batch</span>
+  <p>On the Home screen, find today's batch and tap the orange <strong>Mark</strong> button.</p>
+</div>
+
+<h3>From the Batch Detail Page</h3>
+<div class="step">
+  <span class="step-number">1</span><span class="step-title">Open the batch</span>
+  <p>Go to <strong>📋 Batches</strong> → tap the batch → tap <strong>Mark Attendance</strong>.</p>
+</div>
+
+<h3>Marking Students</h3>
+<div class="step">
+  <span class="step-number">2</span><span class="step-title">Tap each student who is present</span>
+  <p>Their row will turn <span style="color:#4CAF50;font-weight:600;">green with a checkmark ✓</span>. Everyone else is automatically marked absent.</p>
+  <p>Each student's row also shows their remaining class balance:</p>
+  <p>
+    <span class="badge badge-green">7 classes left</span> — plenty remaining<br>
+    <span class="badge badge-orange">4 classes left</span> — getting low<br>
+    <span class="badge badge-red">1 class left</span> — needs renewal soon
+  </p>
+</div>
+
+<div class="warning">Students with <strong>0 classes remaining</strong> will appear greyed out and cannot be marked present. They need a new class pack first.</div>
+
+<div class="step">
+  <span class="step-number">3</span><span class="step-title">Review and confirm</span>
+  <p>Tap <strong>Submit Attendance</strong>. A confirmation dialog will show you how many students are present vs absent. Tap <strong>Confirm</strong>.</p>
+</div>
+
+<h3>What Happens Automatically</h3>
+<table>
+  <tr><th>Action</th><th>What Happens</th></tr>
+  <tr><td>Student marked present</td><td>1 class is deducted from their pack. They get a push notification: <em>"Your attendance for [Batch] on [Date] has been marked — Fusion Steps"</em></td></tr>
+  <tr><td>Balance reaches ≤ 2 classes</td><td>Student gets a low-balance notification: <em>"You have 2 classes left — talk to Sriparna to top up"</em></td></tr>
+  <tr><td>Balance reaches 0</td><td>The pack is automatically deactivated. Student can't be marked present until they get a new pack.</td></tr>
+</table>
+
+<div class="tip">You can only mark attendance once per batch per day. If you try again, you'll see a message saying attendance has already been recorded.</div>
+
+<!-- 6. SUBSCRIPTIONS -->
+<h2 id="subscriptions">6. Subscriptions & Class Packs</h2>
+
+<p>Students pay for class packs (5, 10, or 20 classes). When you mark attendance, 1 class is deducted automatically.</p>
+
+<h3>Assigning a Class Pack</h3>
+<div class="step">
+  <span class="step-number">1</span><span class="step-title">Open the student's profile</span>
+  <p>Go to <strong>👥 Students</strong> → tap the student's name.</p>
+</div>
+<div class="step">
+  <span class="step-number">2</span><span class="step-title">Tap "Assign Pack"</span>
+</div>
+<div class="step">
+  <span class="step-number">3</span><span class="step-title">Choose a pack size</span>
+  <p>Select <strong>5 Classes</strong>, <strong>10 Classes</strong>, or <strong>20 Classes</strong>.</p>
+</div>
+<div class="step">
+  <span class="step-number">4</span><span class="step-title">Tap "Assign Pack"</span>
+  <p>The student's balance is updated immediately. If they had an existing pack, it will be replaced by the new one.</p>
+</div>
+
+<div class="tip">Assign a new pack when the student pays you in person (cash or bank transfer). There's no online payment — you handle that outside the app.</div>
+
+<h3>Understanding the Balance Badge</h3>
+<table>
+  <tr><th>Badge Colour</th><th>Meaning</th></tr>
+  <tr><td><span class="badge badge-green">5+ classes left</span></td><td>All good — no action needed</td></tr>
+  <tr><td><span class="badge badge-orange">3-4 classes left</span></td><td>Getting low — student should plan to renew soon</td></tr>
+  <tr><td><span class="badge badge-red">0-2 classes left</span></td><td>Urgent — will run out soon. Shows on your Dashboard alerts too.</td></tr>
+</table>
+
+<!-- 7. VIDEOS -->
+<h2 id="videos">7. Video Library</h2>
+
+<p>Share class recordings, choreography breakdowns, and performance videos with your students.</p>
+
+<h3>Uploading a Video</h3>
+<div class="step">
+  <span class="step-number">1</span><span class="step-title">Go to the Videos tab</span>
+  <p>Tap <strong>🎬 Videos</strong> → tap <strong>+ Upload</strong>.</p>
+</div>
+<div class="step">
+  <span class="step-number">2</span><span class="step-title">Fill in the details</span>
+  <p>
+    <strong>Title:</strong> e.g., "Nagada Sang Dhol — Full Choreo"<br>
+    <strong>Description:</strong> Optional notes about the video<br>
+    <strong>Style:</strong> Bollywood, Western, or Fusion<br>
+    <strong>Visible to batches:</strong> Select which batches can see this video (tap to toggle)
+  </p>
+</div>
+<div class="step">
+  <span class="step-number">3</span><span class="step-title">Select the video file</span>
+  <p>Tap the upload area. Supported formats: <strong>MP4, MOV, WebM</strong>. Maximum size: <strong>500 MB</strong>.</p>
+</div>
+<div class="step">
+  <span class="step-number">4</span><span class="step-title">Tap "Upload Video"</span>
+  <p>A progress bar shows the upload status. Once complete, students in the selected batches will receive a push notification: <em>"New video: [Title] — watch now!"</em></p>
+</div>
+
+<h3>Filtering Videos</h3>
+<p>Use the style filter tabs at the top of the Videos page: <strong>All</strong>, <strong>Bollywood</strong>, <strong>Western</strong>, or <strong>Fusion</strong>.</p>
+
+<h3>Playing a Video</h3>
+<p>Tap any video card to play it inline. Tap <strong>Close</strong> to dismiss the player.</p>
+
+<!-- 8. STUDENT GUIDE -->
+<h2 id="student-guide">8. Student Guide</h2>
+<p style="color:var(--pink);font-weight:600;">📱 Share this section with your students!</p>
+
+<div style="background:white;border-radius:16px;padding:24px;margin:20px 0;border:2px solid var(--pink);box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+
+<h3 style="color:var(--dark);">Welcome to Fusion Steps! 🩰</h3>
+<p>Your teacher Sriparna has set up a Fusion Steps account for you. Here's how to get started:</p>
+
+<h4>Setting Up Your Account</h4>
+<div class="step student-section">
+  <span class="step-number">1</span><span class="step-title">Check your email</span>
+  <p>You'll receive a password reset email from Firebase. Click the link to set your password.</p>
+</div>
+<div class="step student-section">
+  <span class="step-number">2</span><span class="step-title">Open the app</span>
+  <p>Go to <strong><a href="https://fusion-steps.netlify.app">fusion-steps.netlify.app</a></strong> on your phone.</p>
+</div>
+<div class="step student-section">
+  <span class="step-number">3</span><span class="step-title">Sign in</span>
+  <p>Use your email and the password you just set.</p>
+</div>
+<div class="step student-section">
+  <span class="step-number">4</span><span class="step-title">Add to Home Screen</span>
+  <p><strong>Android:</strong> Menu → "Add to Home Screen"<br>
+  <strong>iPhone:</strong> Share → "Add to Home Screen"</p>
+</div>
+
+<h4>What You Can See</h4>
+<div class="icon-row">
+  <div class="icon-card"><div class="emoji">🏠</div><div class="label">Home</div><div class="desc">Your class balance & next class</div></div>
+  <div class="icon-card"><div class="emoji">📅</div><div class="label">Attendance</div><div class="desc">Your attendance history</div></div>
+  <div class="icon-card"><div class="emoji">🎬</div><div class="label">Videos</div><div class="desc">Watch class videos</div></div>
+  <div class="icon-card"><div class="emoji">👤</div><div class="label">Profile</div><div class="desc">Your info & sign out</div></div>
+</div>
+
+<h4>Your Home Screen</h4>
+<p>The big number in the middle shows your <strong>remaining classes</strong>. Below that, you'll see your next upcoming class and any recent notifications.</p>
+
+<h4>Notifications You'll Receive</h4>
+<table>
+  <tr><th>When</th><th>Notification</th></tr>
+  <tr><td>Your attendance is marked</td><td>"Your attendance for [Batch] on [Date] has been marked"</td></tr>
+  <tr><td>Classes running low</td><td>"You have [N] classes left — talk to Sriparna to top up"</td></tr>
+  <tr><td>New video uploaded</td><td>"New video: [Title] — watch now!"</td></tr>
+</table>
+
+</div>
+
+<!-- 9. TROUBLESHOOTING -->
+<h2 id="troubleshooting">9. Troubleshooting</h2>
+
+<h3>Common Issues</h3>
+<table>
+  <tr><th>Problem</th><th>Solution</th></tr>
+  <tr><td>"Invalid email or password"</td><td>Double-check your email spelling. If you forgot your password, ask Sriparna to send a new password reset link.</td></tr>
+  <tr><td>Student can't log in</td><td>Make sure they clicked the password reset link in their email and set a password. Check spam/junk folders.</td></tr>
+  <tr><td>Can't mark a student present</td><td>Their class balance is at 0. Assign a new class pack first.</td></tr>
+  <tr><td>"Attendance already recorded"</td><td>You already submitted attendance for this batch today. Each batch can only have attendance marked once per day.</td></tr>
+  <tr><td>Videos not showing for a student</td><td>Make sure the student is enrolled in a batch that has access to that video. Check their profile → Batches.</td></tr>
+  <tr><td>App is slow or not loading</td><td>Pull down to refresh, or close and reopen the app. Check your internet connection.</td></tr>
+  <tr><td>"You're offline" banner showing</td><td>Your device has no internet. You can still view cached data, but can't make changes until you're back online.</td></tr>
+</table>
+
+<h3>Need Help?</h3>
+<p>Contact the developer (Biswa) or check the app's GitHub repository for technical issues.</p>
+
+<div style="text-align:center;margin:60px 0 20px;color:#999;font-size:13px;">
+  <div style="font-family:'Dancing Script';font-size:24px;color:var(--teal);margin-bottom:4px;">Fusion Steps</div>
+  <div>by Sriparna Dutta</div>
+  <div style="margin-top:8px;">Made with ❤️ in Sydney</div>
+</div>
+
+</div>
+</body>
+</html>

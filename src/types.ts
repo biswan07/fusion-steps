@@ -2,7 +2,9 @@ export type UserRole = 'teacher' | 'student'
 export type DanceStyle = 'Bollywood' | 'Western' | 'Fusion'
 export type BatchLevel = 'Beginner' | 'Intermediate' | 'Advanced'
 export type AttendanceStatus = 'present' | 'absent'
-export type PackSize = 5 | 10 | 20
+export type PackSize = 1 | 5 | 10 | 20
+export type StudentCategory = 'Children' | 'Teen' | 'Women'
+export type EnrollmentType = 'Term' | 'Casual'
 
 export interface AppUser {
   id: string
@@ -14,6 +16,10 @@ export interface AppUser {
   fcmToken?: string
   createdAt: Date
   createdBy: string
+  studentCategory?: StudentCategory
+  enrollmentType?: EnrollmentType
+  parentName?: string
+  parentPhone?: string
 }
 
 export interface Batch {
