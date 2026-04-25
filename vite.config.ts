@@ -1,17 +1,49 @@
 import { defineConfig } from 'vitest/config'
+import { loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+
+const FCM_SW = 'firebase-messaging-sw.js'
+const FCM_SW_KEYS = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  'VITE_FIREBASE_APP_ID',
+] as const
+
+// Vite's `define` and env substitution don't touch files in public/, which is
+// where firebase-messaging-sw.js must live so it registers at root scope. This
+// plugin reads the SW after the build, substitutes __VITE_FIREBASE_*__ tokens
+// with the resolved env values, and writes the result over dist/{file}.
+function fcmSwTemplate(): Plugin {
+  let env: Record<string, string> = {}
+  return {
+    name: 'fcm-sw-template',
+    apply: 'build',
+    configResolved(config) {
+      env = loadEnv(config.mode, config.root, '')
+    },
+    closeBundle() {
+      const src = resolve('public', FCM_SW)
+      const out = resolve('dist', FCM_SW)
+      if (!existsSync(src)) return
+      let body = readFileSync(src, 'utf8')
+      for (const key of FCM_SW_KEYS) {
+        body = body.replace(new RegExp(`__${key}__`, 'g'), JSON.stringify(env[key] || ''))
+      }
+      writeFileSync(out, body)
+      const missing = FCM_SW_KEYS.filter((k) => !env[k])
+      if (missing.length) {
+        this.warn(`${FCM_SW} built without: ${missing.join(', ')} — background FCM will be disabled.`)
+      }
+    },
+  }
+}
 
 export default defineConfig({
-  // Inject Firebase config into the FCM service worker (public/firebase-messaging-sw.js)
-  // The service worker can't access import.meta.env, so we use string replacement at build time.
-  define: {
-    '__VITE_FIREBASE_API_KEY__': JSON.stringify(process.env.VITE_FIREBASE_API_KEY || ''),
-    '__VITE_FIREBASE_PROJECT_ID__': JSON.stringify(process.env.VITE_FIREBASE_PROJECT_ID || ''),
-    '__VITE_FIREBASE_MESSAGING_SENDER_ID__': JSON.stringify(process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || ''),
-    '__VITE_FIREBASE_APP_ID__': JSON.stringify(process.env.VITE_FIREBASE_APP_ID || ''),
-  },
   plugins: [
     react(),
     tailwindcss(),
@@ -45,6 +77,7 @@ export default defineConfig({
         ],
       },
     }),
+    fcmSwTemplate(),
   ],
   test: {
     globals: true,
