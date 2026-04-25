@@ -1,22 +1,35 @@
 import { useParams, Link } from 'react-router-dom'
-import { doc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore'
+import {
+  doc, arrayUnion, arrayRemove, writeBatch, collection, serverTimestamp, addDoc,
+} from 'firebase/firestore'
 import { db } from '../../firebase'
 import { useStudent } from '../../hooks/useStudents'
 import { useStudentSubscriptions } from '../../hooks/useSubscriptions'
 import { useStudentAttendance } from '../../hooks/useAttendance'
 import { useBatches } from '../../hooks/useBatches'
+import { useAuth } from '../../hooks/useAuth'
 import { SubscriptionBadge } from '../../components/SubscriptionBadge'
 import { PunchCard } from '../../components/PunchCard'
+import {
+  PackEditDialog,
+  type PackEditMode,
+  type PackEditConfirmPayload,
+} from '../../components/PackEditDialog'
+import { callEditSubscription } from '../../lib/callables'
 import { formatDateDDMMYYYY } from '../../utils/dates'
+import { formatEditEntry } from '../../utils/editHistory'
 import { useState } from 'react'
 
 export function StudentProfile() {
   const { studentId } = useParams()
+  const { user } = useAuth()
   const { student, loading } = useStudent(studentId)
   const { subscriptions } = useStudentSubscriptions(studentId)
   const { records } = useStudentAttendance(studentId)
   const { batches: allBatches } = useBatches(false)
   const [addingBatch, setAddingBatch] = useState(false)
+  const [dialog, setDialog] = useState<PackEditMode | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
 
   if (loading) return <div className="text-white/30 text-sm">Loading...</div>
   if (!student) return <div className="text-white/30 text-sm">Student not found</div>
@@ -32,9 +45,7 @@ export function StudentProfile() {
       batch.update(doc(db, 'batches', batchId), { studentIds: arrayUnion(studentId) })
       await batch.commit()
       setAddingBatch(false)
-    } catch (err) {
-      console.error('addToBatch error:', err)
-    }
+    } catch (err) { console.error('addToBatch error:', err) }
   }
 
   async function removeFromBatch(batchId: string) {
@@ -44,10 +55,47 @@ export function StudentProfile() {
       batch.update(doc(db, 'users', studentId), { batchIds: arrayRemove(batchId) })
       batch.update(doc(db, 'batches', batchId), { studentIds: arrayRemove(studentId) })
       await batch.commit()
-    } catch (err) {
-      console.error('removeFromBatch error:', err)
+    } catch (err) { console.error('removeFromBatch error:', err) }
+  }
+
+  async function handlePackEdit(payload: PackEditConfirmPayload) {
+    if (!activeSub) return
+    if (payload.mode === 'resize') {
+      await callEditSubscription({
+        subscriptionId: activeSub.id,
+        op: 'resize',
+        newPackSize: payload.newPackSize,
+        newClassesRemaining: payload.newClassesRemaining,
+      })
+      return
+    }
+    if (payload.mode === 'backdate-count') {
+      await callEditSubscription({
+        subscriptionId: activeSub.id,
+        op: 'backdate-count',
+        usedCount: payload.usedCount,
+      })
+      return
+    }
+    if (!db || !user || !student) return
+    for (const d of payload.dates) {
+      await addDoc(collection(db, 'attendance'), {
+        batchId: '',
+        studentId: student.id,
+        studentName: student.name,
+        batchName: 'Backdated entry',
+        date: d,
+        status: 'present',
+        markedBy: user.uid,
+        isBackdated: true,
+        createdAt: serverTimestamp(),
+      })
     }
   }
+
+  const sortedHistory = (activeSub?.editHistory ?? []).slice().sort(
+    (a, b) => new Date(b.editedAt).getTime() - new Date(a.editedAt).getTime()
+  )
 
   return (
     <div className="space-y-6">
@@ -101,6 +149,34 @@ export function StudentProfile() {
               <SubscriptionBadge classesRemaining={activeSub.classesRemaining} />
             </div>
             <PunchCard packSize={activeSub.packSize} classesRemaining={activeSub.classesRemaining} />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDialog('resize')}
+                className="flex-1 rounded-lg bg-white/5 px-3 py-2 text-xs"
+              >
+                Edit pack
+              </button>
+              <button
+                onClick={() => setDialog('backdate-count')}
+                className="flex-1 rounded-lg bg-white/5 px-3 py-2 text-xs"
+              >
+                Add past attendance
+              </button>
+            </div>
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              className="w-full rounded-lg bg-white/5 px-3 py-2 text-xs text-left"
+            >
+              {showHistory ? '▾' : '▸'} History
+            </button>
+            {showHistory && (
+              <div className="space-y-1 text-xs text-white/60">
+                {sortedHistory.length === 0 && <div>No edits yet.</div>}
+                {sortedHistory.map((entry, i) => (
+                  <div key={i}>{formatEditEntry(entry)}</div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <p className="text-white/30 text-sm">No active subscription</p>
@@ -108,7 +184,9 @@ export function StudentProfile() {
       </section>
 
       <section>
-        <div className="text-xs uppercase tracking-wider text-[#00BCD4] mb-3">Batches ({allBatches.filter((b) => student.batchIds.includes(b.id)).length})</div>
+        <div className="text-xs uppercase tracking-wider text-[#00BCD4] mb-3">
+          Batches ({allBatches.filter((b) => student.batchIds.includes(b.id)).length})
+        </div>
         <div className="space-y-2">
           {allBatches.filter((b) => student.batchIds.includes(b.id)).map((b) => (
             <div key={b.id} className="bg-white/5 rounded-lg p-3 flex justify-between items-center">
@@ -136,6 +214,16 @@ export function StudentProfile() {
             ))}
           </div>
         </section>
+      )}
+
+      {dialog && activeSub && (
+        <PackEditDialog
+          mode={dialog}
+          currentPackSize={activeSub.packSize}
+          currentRemaining={activeSub.classesRemaining}
+          onClose={() => setDialog(null)}
+          onConfirm={handlePackEdit}
+        />
       )}
     </div>
   )
