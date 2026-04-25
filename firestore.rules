@@ -26,12 +26,20 @@ service cloud.firestore {
 
     match /attendance/{attendanceId} {
       allow read: if isTeacher() || (request.auth != null && resource.data.studentId == request.auth.uid);
+      // Teachers may set isBackdated:true on create (no extra clause needed —
+      // teacher already has full create access).
       allow create, update: if isTeacher();
     }
 
     match /subscriptions/{subscriptionId} {
       allow read: if isTeacher() || (request.auth != null && resource.data.studentId == request.auth.uid);
-      allow create, update: if isTeacher();
+      // Teachers may CREATE subscriptions and may UPDATE only the lifecycle field `isActive`.
+      // All mutations to packSize / classesRemaining / editHistory go through the
+      // editSubscription Cloud Function (admin SDK bypasses these rules), preserving
+      // the "server-only deduction" invariant.
+      allow create: if isTeacher();
+      allow update: if isTeacher() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isActive']);
     }
 
     match /videos/{videoId} {
