@@ -38,3 +38,15 @@ functions/node_modules/
 # Local Claude Code state
 .claude/
 .playwright-mcp/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Firebase emulator artifacts
+firestore-debug.log
+firebase-debug.log
+ui-debug.log
+database-debug.log
+pubsub-debug.log

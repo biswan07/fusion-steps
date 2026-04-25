@@ -21,7 +21,7 @@ npm run serve        # build + firebase emulators:start --only functions
 npm run deploy       # firebase deploy --only functions
 ```
 
-Firebase emulator ports (see `firebase.json`): auth 9099 · functions 5001 · firestore 8080 · storage 9199 · UI enabled.
+Firebase emulator ports (see `firebase.json`): auth 9099 · functions 5001 · firestore 8088 · storage 9199 · UI enabled. (Firestore moved off 8080 to dodge common collisions.)
 
 ## Architecture
 
