@@ -44,6 +44,22 @@ export interface AttendanceRecord {
   status: AttendanceStatus
   markedBy: string
   createdAt: Date
+  isBackdated?: boolean
+}
+
+export type SubscriptionEditAction =
+  | 'backdate-dates'
+  | 'backdate-count'
+  | 'resize'
+
+export interface EditEntry {
+  action: SubscriptionEditAction
+  editedBy: string
+  editedAt: Date
+  oldValue: { packSize: PackSize; classesRemaining: number }
+  newValue: { packSize: PackSize; classesRemaining: number }
+  dates?: Date[]
+  reason?: string
 }
 
 export interface Subscription {
@@ -55,6 +71,7 @@ export interface Subscription {
   assignedBy: string
   assignedAt: Date
   isActive: boolean
+  editHistory?: EditEntry[]
 }
 
 export interface Video {
