@@ -12,14 +12,19 @@ npm run dev          # Vite dev server
 npm run build        # tsc -b && vite build (PWA bundle)
 npm run preview      # serve the production build
 npm run lint         # eslint .
-npm test             # vitest run (jsdom)
+npm test             # vitest run (jsdom) — unit + integration
 npm run test:watch   # vitest watch
+npm run test:e2e     # Playwright E2E against full emulator stack
+npm run test:e2e:ui  # Playwright UI mode (interactive)
 
 # Cloud Functions (cd functions/)
 npm run build        # tsc → lib/
 npm run serve        # build + firebase emulators:start --only functions
 npm run deploy       # firebase deploy --only functions
+npm test             # vitest — trigger/callable unit tests with admin mocks
 ```
+
+E2E prerequisites: `firebase-tools` CLI and `openjdk@21` (`brew install firebase-cli openjdk@21`). The Playwright config wires `JAVA_HOME` automatically and pre-kills any leaked Firestore emulator JVM from a prior aborted run. E2E tests live in `e2e/` and seed deterministic data via `firebase-admin` against the emulator before each spec.
 
 Firebase emulator ports (see `firebase.json`): auth 9099 · functions 5001 · firestore 8088 · storage 9199 · UI enabled. (Firestore moved off 8080 to dodge common collisions.)
 
